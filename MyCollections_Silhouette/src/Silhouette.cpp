@@ -1,7 +1,11 @@
 ﻿/********************************************************************************************
  * File: Silhouette.cpp
  * ----------------------
- * v.1 2015/11/30
+ *  * v.3 2015/12/18 - changed:
+ * - detectUnion()
+ * - repaintPerimetrColor()
+ * - adjustMainWindow()
+ *
  * Programm gets white-black image (GIF, PNG, JPEG, BMP),
  * and discovers what object on it
  * are actually could be human bodies silhouettes.
@@ -16,6 +20,8 @@
 #include "gbufferedimage.h"
 #include "filelib.h"
 #include "simpio.h"
+#include "myMap.h"
+#include "quickSort.h"
 
 using namespace std;
 
@@ -30,7 +36,7 @@ struct Pt{
     int x;
     int y;
     bool operator==(const Pt & n1){
-             return (x == n1.x) && (y == n1.y);
+        return (x == n1.x) && (y == n1.y);
     }
 };
 
@@ -100,6 +106,10 @@ void adjustMainWindow(GWindow& gw, string inputFile){
     img->resize(imgWidth, imgHeight);
     gw.setSize(imgWidth, imgHeight);
     gw.add(img, 0, 0);
+    string title = "MyCollections_Silhouette";
+    setConsoleWindowTitle(title);
+    setConsoleLocation(imgWidth, 0);
+    setConsoleSize(700, 400);
 
     MINIMAL_SIZE = ((imgWidth * imgHeight)/1000);//Size for garbage objects
     NOT_HUMAN_OBJECT_COLOR = BLUE;               //To show objects discovered as not human
@@ -128,7 +138,8 @@ void filterImage(GBufferedImage* img){
     }
 }
 
-/* Function: detectUnion()
+/* Function: detectUnion()- Modified:
+ * Improved process productivity
  * -----------------------
  * Returns vector of pixels, which are not white
  * on the main program image, and
@@ -145,36 +156,24 @@ MyVector<Pt> detectUnion(int row, int col){
     pt.x = col;
     pt.y = row;
     MyPQueue<Pt> pointsQueue;//MyPQueue is priority queue class
-    MyVector<Pt> queueList;
     pointsQueue.enqueue(pt,0);//"0" priority is assigned to every input object in queue
-    queueList.add(pt);
     /* Finding of around cells process */
     while(!pointsQueue.isEmpty()){
         pt = pointsQueue.dequeueMin();
-        queueList.removeValue(pt);
-        if(!result.isContains(pt)){
-            result.add(pt);          
-            img->setRGB(pt.x, pt.y, UNION_COLOR);//Every pixel from queue is already validated
-            /* Main around cells checking */
-            int x = pt.x;
-            int y = pt.y;
-            if((x > 0) && (x < (imgWidth - 1))){
-                if((y > 0) && (y < (imgHeight - 1))){
-                    for(int i = x-1; i <= x+1; i++){
-                        for(int u = y-1; u <= y+1; u++){
-                            int cellColor = img->getRGB(i, u);
-                            if((cellColor != UNION_COLOR) && (cellColor != WHITE)){
-                            /* This pixel is new part for current union */
-                                Pt objPoint;
-                                objPoint.x = i;
-                                objPoint.y = u;
-                                if(!result.isContains(objPoint)){
-                                    if(!queueList.isContains(objPoint)){
-                                        pointsQueue.enqueue(objPoint, 0);
-                                        queueList.add(objPoint);
-                                    }
-                                }
-                            }
+        result.add(pt);
+        int x = pt.x;
+        int y = pt.y;
+        if((x > 0) && (x < (imgWidth - 1))){
+            if((y > 0) && (y < (imgHeight - 1))){
+                for(int i = x-1; i <= x+1; i++){
+                    for(int u = y-1; u <= y+1; u++){
+                        if((i == x) && (u == y))continue;
+                        int cellColor = img->getRGB(i, u);
+                        if((cellColor != UNION_COLOR) && (cellColor != WHITE)){
+                        /* This pixel is new part for current union */
+                            Pt objPoint; objPoint.x = i; objPoint.y = u;
+                            pointsQueue.enqueue(objPoint, 0);
+                            img->setRGB(i, u, UNION_COLOR);
                         }
                     }
                 }
@@ -292,28 +291,27 @@ int getMiddleWidth(int middle_Y, MyVector<Pt> objectVec){
     return result;
 }
 
-/* Function: repaintPerimetrColor()
- * --------------------------------
+/* Function: repaintPerimetrColor() - Modified:
+ * Improved process productivity
+ * -----------------------------
  * Repaint object perimeter pixels in PERIMETR_COLOR
  * for 1 time due to simple condition: if there are other
  * colors cells around current cell - it's perimeter cell.
  *
  * @param objectVec  object to process  */
 void repaintPerimetrColor(MyVector<Pt>& objectVec){
-    MyVector<Pt> perimeter;
-    for(int u = 0; u < objectVec.size(); u++){
-        Pt point = objectVec[u];
-        int x = point.x;
-        int y = point.y;
-
-        int pointColor = img->getRGB(x, y);
-        if((x > 0) && (x < (img->getWidth() - 1))){
-            if((y > 0) && (y < (img->getHeight() - 1))){
-                for(int i = x-1; i <= x+1; i++){
-                    for(int u = y-1; u <= y+1; u++){                       
-                        if(img->getRGB(i, u) != pointColor){
-                            if(!perimeter.isContains(point)){
-                                    perimeter.add(point);
+    MyMap<int,Pt> perimeter;
+    for(int objIndx = 0; objIndx < objectVec.size(); objIndx++){
+        Pt point = objectVec[objIndx];
+        int pointX = point.x;
+        int pointY = point.y;
+        if((pointX > 0) && (pointX < (img->getWidth() - 1))){
+            if((pointY > 0) && (pointY < (img->getHeight() - 1))){
+                for(int imgX = pointX-1; imgX <= pointX+1; imgX++){
+                    for(int imgY = pointY-1; imgY <= pointY+1; imgY++){
+                        if(img->getRGB(imgX, imgY)  != UNION_COLOR){
+                            if(!perimeter.containsKey(objIndx)){
+                                perimeter.add(objIndx,point);
                             }
                             break;
                         }
@@ -322,14 +320,26 @@ void repaintPerimetrColor(MyVector<Pt>& objectVec){
             }
         }
     }
-
-    /* Repaint all perimetr cells */
-    for(int u = 0; u < perimeter.size(); u++){
-        Pt i = perimeter[u];
-
-        img->setRGB(i.x, i.y, PERIMETR_COLOR);
-        objectVec.removeValue(i);
+    /* To prepare perimeter points removing
+     * from main objectVec put their indexes
+     * at objectVec into keysToRemove vector */
+    MyVector<int> keysToRemove;
+    for(int key: perimeter){
+        keysToRemove.add(key);
     }
+    /* Sort indexes - then we could make
+     * removement from main objectVect correctly, from end
+     * to begin */
+    int maxIndex = keysToRemove.size() - 1;
+    ascendQuickSort(keysToRemove, 0, maxIndex);
+    /* Repaint perimetr cells, and remove them from objectVec */
+    for(int i = (keysToRemove.size() - 1); i >= 0; i--){
+        Pt removePt = perimeter[keysToRemove[i]];
+        img->setRGB(removePt.x, removePt.y, PERIMETR_COLOR);
+        objectVec.remove(keysToRemove[i]);
+    }
+
+
 }
 
 /* Function: shrinkAllUnions()
@@ -394,7 +404,8 @@ int silhouettesCounting(MyVector<MyVector<Pt>> unionsTable){
             for(int u = 0; u < object.size(); u++){
                 Pt i = object[u];
                 /* Repaint no human objects into garbageColor */
-                img->setRGB(i.x, i.y, NOT_HUMAN_OBJECT_COLOR);
+                //img->setRGB(i.x, i.y, NOT_HUMAN_OBJECT_COLOR);
+
             }
         }
     }
@@ -408,9 +419,9 @@ int silhouettesCounting(MyVector<MyVector<Pt>> unionsTable){
 
 int main(){  
     /* --------------------------------------------------------------------------*/
-    //string inputFile = "free-vector.jpg";//Enter your image file here
+    string inputFile = "girls.jpg";//Enter your image file here
     /* --------------------------------------------------------------------------*/
-    string inputFile = fileInput("Enter your image file here: ");
+    //string inputFile = fileInput("Enter your image file here: ");
 
     GWindow gw;
     adjustMainWindow(gw, inputFile);//Main window and program settings
