@@ -1,9 +1,10 @@
 ﻿/*
  * File: myMap.h
  * -----------------------------------------------------------------------------------------//
- * This file exports the template class, which maintains
- * structure for hash map structure.
- * v.1_1 - Huffman requirements - bug fixed
+ * v.2 2015/12/25 - Modified
+ * - code reformatted
+ * - include "vector.h" for keys() function
+ * - code fields are renamed
  *
  * Current implementation of hashmap has raw study version,
  * it suits only Huffman compression requirements,
@@ -25,6 +26,7 @@
 #include <string>
 #include "error.h"
 #include "hashcode.h"
+#include "vector.h"
 
 
 /*
@@ -47,9 +49,7 @@ class MyMap {
  * -----------------------------------------------------------------------------------------*/
 public:  
 
-    Vector<KeyType> keys() const;
 
-    void toString() const;
     /*
      * Constructor: MyMap
      * Usage: MyMap<KeyType, ValueType> map;
@@ -140,6 +140,22 @@ public:
     template <typename FunctorType>
     void mapAll(FunctorType fn) const;
 
+    /*
+     * Method: keys()
+     * Usage: Vector<KeyType> keys = map.keys();
+     * -----------------------------------------
+     * Returns a collection containing all keys in this map.
+     */
+    Vector<KeyType> keys() const;
+
+    /*
+     * Method: toString
+     * Usage: string str = map.toString();
+     * -----------------------------------
+     * Converts the map to a printable string representation.
+     */
+    void toString() const;
+
 /* -----------------------------------------------------------------------------------------//
  * Iterator support
  * ----------------
@@ -167,9 +183,9 @@ public:
          */
     private:
 
-        const MyMap* mp;             /* Pointer to the map                      */
+        const MyMap* thisMap;        /* Pointer to the map                      */
         int bucket;                  /* Index of current bucket                 */
-        MyMap::Pair* cp;             /* Pointer to current cell in bucket chain */
+        MyMap::Pair* currentPair;    /* Pointer to current cell in bucket chain */
 
     public:
 
@@ -180,7 +196,7 @@ public:
          * During MyMap object initiation, this
          * defalut iterator is created too.
          */
-        iterator() : mp(NULL), bucket(0), cp(0) {
+        iterator() : thisMap(NULL), bucket(0), currentPair(0) {
             /* Empty */
         }
 
@@ -201,26 +217,26 @@ public:
          * @param end   true if the end iterator
          *              construction called
          */
-        iterator(const MyMap* mp, bool end) {
+        iterator(const MyMap* thisMap, bool end) {
             /* Tight connection with particular MyMap object. */
-            this->mp = mp;
+            this->thisMap = thisMap;
             if (end) {//If end flag - create end iterator
                 /* Put iterator on the last map bucket */
-                bucket = mp->nBuckets;
+                bucket = thisMap->numBuckets;
                 /* In this bucket - put iterator on the external cell */
-                cp = NULL;
+                currentPair = NULL;
             } else {//If end flag is false - create begin iterator
                 /* Put iterator on the first map bucket */
                 bucket = 0;
                 /* This buckets cell stores pointer on the first list pair.
                  * Put iterator on it. */
-                cp = mp->buckets[bucket];
+                currentPair = thisMap->buckets[bucket];
                 /* If this pair dosen't store anything - search
                  * next useful bucket. */
-                while ((cp == NULL) && (++bucket < mp->nBuckets)) {
+                while ((currentPair == NULL) && (++bucket < thisMap->numBuckets)) {
                     /* Check the pair binded with this bucket pair
                      * while we don't find first existed pair in map */
-                    cp = mp->buckets[bucket];
+                    currentPair = thisMap->buckets[bucket];
                 }
             }
         }
@@ -233,9 +249,9 @@ public:
          * if it needs for current MyMap object.
          */
         iterator(const iterator& it) {
-            mp = it.mp;
+            thisMap = it.thisMap;
             bucket = it.bucket;
-            cp = it.cp;
+            currentPair = it.currentPair;
         }
 
         /*
@@ -246,12 +262,11 @@ public:
          * and then, returns this iterator reference.
          */
         iterator& operator++() {
-            //std::cout << bucket << ": " << (char)cp->key << " - " << cp->key << endl;
-            cp = cp->link;//Move this iterator to the next pair
-            while ((cp == NULL) && (++bucket < mp->nBuckets)) {
+            currentPair = currentPair->link;//Move this iterator to the next pair
+            while ((currentPair == NULL) && (++bucket < thisMap->numBuckets)) {
                 /* If the pair binded with this bucket isn't
                  * exist - move iterator to next bucket*/
-                cp = mp->buckets[bucket];
+                currentPair = thisMap->buckets[bucket];
             }
 
             return *this;//Get iterator reference
@@ -282,7 +297,7 @@ public:
          * position in buckets ctructure.
          */
         bool operator ==(const iterator& rhs) {
-            return mp == rhs.mp && bucket == rhs.bucket && cp == rhs.cp;
+            return thisMap == rhs.thisMap && bucket == rhs.bucket && currentPair == rhs.currentPair;
         }
 
         bool operator !=(const iterator& rhs) {
@@ -297,7 +312,7 @@ public:
          * which iterator points currently
          */
         KeyType& operator *() {
-            return cp->key;
+            return currentPair->key;
         }
 
         /*
@@ -307,7 +322,7 @@ public:
          * which iterator points currently
          */
         KeyType* operator ->() {
-            return &cp->key;
+            return &currentPair->key;
         }
 
         /* Friends */
@@ -380,7 +395,7 @@ private:
 
     static const int INITIAL_BUCKET_COUNT = 30; //Initial buckets array length.
     Pair ** buckets;                //High level array of pointers to Pairs.
-    int nBuckets;                   //Current buckets array length - for rehashing purpose.
+    int numBuckets;                 //Current buckets array length - for rehashing purpose.
     int numElements;                //Quantity of inputed user entries.
 
     /*
@@ -428,9 +443,9 @@ private:
  */
 template <typename KeyType, typename ValueType>
 MyMap<KeyType, ValueType>::MyMap() {
-    nBuckets = INITIAL_BUCKET_COUNT;
-    buckets = new Pair*[nBuckets];
-    for(int i = 0; i < nBuckets; i++){
+    numBuckets = INITIAL_BUCKET_COUNT;
+    buckets = new Pair*[numBuckets];
+    for(int i = 0; i < numBuckets; i++){
         buckets[i] = NULL;
     }
     numElements = 0;
@@ -445,8 +460,7 @@ MyMap<KeyType, ValueType>::MyMap() {
  */
 template <typename KeyType, typename ValueType>
 MyMap<KeyType, ValueType>::~MyMap() {
-    //std::cout << "Destructor " << std::endl;
-    for(int i = 0; i < nBuckets; i++){
+    for(int i = 0; i < numBuckets; i++){
         Pair * cp = buckets[i];
         while(cp != NULL){
             Pair * oldPair = cp;
@@ -467,10 +481,7 @@ MyMap<KeyType, ValueType>::~MyMap() {
  */
 template <typename KeyType, typename ValueType>
 ValueType MyMap<KeyType, ValueType>::get(const KeyType& key) const {
-    int bucket = hashCode(key) % nBuckets;
-
-    //cout << bucket;
-
+    int bucket = hashCode(key) % numBuckets;
     Pair * cp = findCell(bucket, key);
     if(cp == NULL)error("get: No pair for this key: ");
     return (cp == NULL) ? ValueType() : cp->data;
@@ -484,7 +495,7 @@ ValueType MyMap<KeyType, ValueType>::get(const KeyType& key) const {
  */
 template <typename KeyType, typename ValueType>
 void MyMap<KeyType, ValueType>::put(const KeyType& key, const ValueType& value) {
-    int bucket = hashCode(key) % nBuckets;
+    int bucket = hashCode(key) % numBuckets;
     /* Discover if such key exist in those bucket yet */
     Pair *cp = findCell(bucket, key);
     /* This key might already be here, in which case we should look up
@@ -504,7 +515,6 @@ void MyMap<KeyType, ValueType>::put(const KeyType& key, const ValueType& value) 
         buckets[bucket] = cp;
     }
     cp->data = value;//Upate value.
-    //std::cout << "bucket " << bucket << ": [" << cp << "] - " << cp->link << std::endl;
     numElements++;
 }
 
@@ -521,7 +531,7 @@ void MyMap<KeyType, ValueType>::add(const KeyType& key, const ValueType& value) 
  */
 template <typename KeyType, typename ValueType>
 void MyMap<KeyType, ValueType>::clear() {
-    for(int i = 0; i < nBuckets; i++){
+    for(int i = 0; i < numBuckets; i++){
         Pair * cp = buckets[i];
         while(cp != NULL){
             Pair * oldPair = cp;
@@ -540,7 +550,7 @@ void MyMap<KeyType, ValueType>::clear() {
  */
 template <typename KeyType, typename ValueType>
 bool MyMap<KeyType, ValueType>::containsKey(const KeyType& key) const {
-    int bucket = hashCode(key) % nBuckets;
+    int bucket = hashCode(key) % numBuckets;
     Pair *cp = findCell(bucket, key);
     if(cp == NULL){
         return false;
@@ -571,7 +581,6 @@ template <typename KeyType, typename ValueType>
 template <typename KeyType, typename ValueType>
 MyMap<KeyType, ValueType>::MyMap(const MyMap<KeyType, ValueType>& src) {
     deepCopy(src);
-    //std::cout << "Copy constructor " << std::endl;
 }
 
 /*
@@ -589,7 +598,6 @@ MyMap<KeyType, ValueType>& MyMap<KeyType, ValueType>::operator =(const MyMap& sr
     if (this != &src) {
         clear();
         deepCopy(src);
-        //std::cout << "Assignment oper " << std::endl;
     }
     return *this;
 }
@@ -603,10 +611,38 @@ MyMap<KeyType, ValueType>& MyMap<KeyType, ValueType>::operator =(const MyMap& sr
 template <typename KeyType, typename ValueType>
 template <typename FunctorType>
 void MyMap<KeyType, ValueType>::mapAll(FunctorType fn) const {
-    for (int i = 0; i < nBuckets; i++) {
+    for (int i = 0; i < numBuckets; i++) {
         for (Pair* cp = buckets[i]; cp != NULL; cp = cp->link) {
             fn(cp->key, cp->data);
         }
+    }
+}
+
+/*
+ * Implementation notes: keys
+ * ----------------------------
+ */
+template <typename KeyType, typename ValueType>
+Vector<KeyType> MyMap<KeyType, ValueType>::keys() const {
+    Vector<KeyType> keyset;
+    for (KeyType key : *this) {
+        keyset.add(key);
+    }
+    return keyset;
+}
+
+/*
+ * Implementation notes: toString
+ * -----------------------------
+ */
+template <typename KeyType, typename ValueType>
+void MyMap<KeyType, ValueType>::toString() const {
+    for (int i = 0; i < numBuckets; i++) {
+        std::cout << "bucket[" << i << "]: ";
+        for (Pair* cp = buckets[i]; cp != NULL; cp = cp->link) {
+            std::cout << "[" << (char)cp->key << "], ";
+        }
+        std::cout <<std::endl;
     }
 }
 
@@ -619,41 +655,20 @@ void MyMap<KeyType, ValueType>::mapAll(FunctorType fn) const {
  */
 template <typename KeyType, typename ValueType>
 void MyMap<KeyType, ValueType>::deepCopy(const MyMap& src) {
-    nBuckets = src.nBuckets;
-    buckets = new Pair*[nBuckets];
-    for(int i = 0; i < nBuckets; i++){
+    numBuckets = src.numBuckets;
+    buckets = new Pair*[numBuckets];
+    for(int i = 0; i < numBuckets; i++){
         /* Initiates array pointers */
         buckets[i] = NULL;
     }
     numElements = 0;//Put method will set right value.
     /* Run through the src map buckets and put elements to this */
-    for (int i = 0; i < nBuckets; i++) {
+    for (int i = 0; i < numBuckets; i++) {
         for (Pair * cp = src.buckets[i]; cp != NULL; cp = cp->link) {
             put(cp->key, cp->data);
         }
     }
 }
 
-
-/* -----------------------------------------*/
-template <typename KeyType, typename ValueType>
-Vector<KeyType> MyMap<KeyType, ValueType>::keys() const {
-    Vector<KeyType> keyset;
-    for (KeyType key : *this) {
-        keyset.add(key);
-    }
-    return keyset;
-}
-/* -----------------------------------------*/
-template <typename KeyType, typename ValueType>
-void MyMap<KeyType, ValueType>::toString() const {
-    for (int i = 0; i < nBuckets; i++) {
-        std::cout << "bucket[" << i << "]: ";
-        for (Pair* cp = buckets[i]; cp != NULL; cp = cp->link) {
-            std::cout << "[" << (char)cp->key << "], ";
-        }
-        std::cout <<std::endl;
-    }
-}
 
 #endif

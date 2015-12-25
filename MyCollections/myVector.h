@@ -1,9 +1,13 @@
 ﻿/********************************************************************************************
- * File: myVector.h
- * ----------------------
- * v.1 2015/11/29
- * This file exports the template class, which maintains Vector structure
- ********************************************************************************************/
+* File: myVector.h
+* ----------------------
+* v.2 2015/12/25 - Modified
+* - code reformatted
+* - chekIndex bug fixed
+* - isContains renamed to contains
+*
+* This file exports the template class, which maintains Vector structure
+********************************************************************************************/
 
 #ifndef _myVector_h
 #define _myVector_h
@@ -17,105 +21,105 @@
  * -----------------------
  */
 template <typename ValueType>
-class MyVector {  
+class MyVector {
 /* -----------------------------------------------------------------------------------------//
  * Interface section
  * -----------------------------------------------------------------------------------------*/
 public:
     /*
-     * Constructor: MyVector
-     * Usage: MyVector<ValueType> myVec;
-     * --------------------------------
-     * Initializes a new empty vector.
-     */
+    * Constructor: MyVector
+    * Usage: MyVector<ValueType> myVec;
+    * --------------------------------
+    * Initializes a new empty vector.
+    */
     MyVector();
 
     /*
-     * Destructor: ~MyVector
-     * ----------------------
-     * Frees any heap storage associated with this vector.
-     */
+    * Destructor: ~MyVector
+    * ----------------------
+    * Frees any heap storage associated with this vector.
+    */
     virtual ~MyVector();
-    
+
     /*
-     * Method: add
-     * Usage: myVec.add(value);
-     * -------------------------
-     * Adds the specified value onto the end of this vector.
-     */
+    * Method: add
+    * Usage: myVec.add(value);
+    * -------------------------
+    * Adds the specified value onto the end of this vector.
+    */
     void add(const ValueType& value);
-    
+
     /*
-     * Method: isEmpty
-     * Usage: if (myVec.isEmpty()) ...
-     * -------------------------------
-     * Returns true if this vector contains no elements.
-     */
+    * Method: isEmpty
+    * Usage: if (myVec.isEmpty()) ...
+    * -------------------------------
+    * Returns true if this vector contains no elements.
+    */
     bool isEmpty() const;
-    
+
     /*
-     * Method: get
-     * Usage: ValueType val = myVec.get(index);
-     * ----------------------------------------
-     * Returns the element at the specified index in this vector.  This
-     * method signals an error if the index is not in the array range.
-     */
+    * Method: get
+    * Usage: ValueType val = myVec.get(index);
+    * ----------------------------------------
+    * Returns the element at the specified index in this vector.  This
+    * method signals an error if the index is not in the array range.
+    */
     const ValueType& get(int index) const;
 
     /*
-     * Method: remove
-     * Usage: myVec.remove(index);
-     * ---------------------------
-     * Removes the element at the specified index from this vector.
-     * All subsequent elements are shifted one position to the left.  This
-     * method signals an error if the index is outside the array range.
-     */
+    * Method: remove
+    * Usage: myVec.remove(index);
+    * ---------------------------
+    * Removes the element at the specified index from this vector.
+    * All subsequent elements are shifted one position to the left.  This
+    * method signals an error if the index is outside the array range.
+    */
     void remove(int index);
 
     /*
-     * Method: removeValue
-     * Usage: myVec.removeValue(value);
-     * --------------------------------
-     * Removes all the specified values from this vector.
-     * This method signals an error if there are no elements
-     * with such value in vector.
-     */
+    * Method: removeValue
+    * Usage: myVec.removeValue(value);
+    * --------------------------------
+    * Removes all the specified values from this vector.
+    * This method signals an error if there are no elements
+    * with such value in vector.
+    */
     void removeValue(ValueType& value);
 
     /*
-     * Method: size
-     * Usage: int nElems = myVec.size();
-     * --------------------------------
-     * Returns the number of elements in this vector.
-     */
+    * Method: size
+    * Usage: int nElems = myVec.size();
+    * --------------------------------
+    * Returns the number of elements in this vector.
+    */
     int size() const;
 
     /*
-     * Method: isContains
-     * Usage: if (myVec.isContains(value)) ...
-     * ----------------------------------------
-     * Returns true if this vector contains at least single such value.
-     */
-    bool isContains(const ValueType& value)const;
+    * Method: contains
+    * Usage: if (myVec.isContains(value)) ...
+    * ----------------------------------------
+    * Returns true if this vector contains at least single such value.
+    */
+    bool contains(const ValueType& value) const;
 
     /*
-     * Deep copying support
-     * --------------------
-     * This copy constructor and operator= are defined to make a deep copy,
-     * making it possible to pass or return vectors by value and assign
-     * from one vector to another.
-     */
+    * Deep copying support
+    * --------------------
+    * This copy constructor and operator= are defined to make a deep copy,
+    * making it possible to pass or return vectors by value and assign
+    * from one vector to another.
+    */
     MyVector(const MyVector& src);
     MyVector& operator =(const MyVector& src);
 
     /*
-     * Operator: []
-     * Usage: myVec[index]
-     * -------------------
-     * Overloads [] to select and modificate elements from this vector. */
+    * Operator: []
+    * Usage: myVec[index]
+    * -------------------
+    * Overloads [] to select and modificate elements from this vector. */
     ValueType& operator [](int index);
     /* Overloads [] to select and get elements from this vector
-     * without modification.  */
+    * without modification.  */
     const ValueType& operator [](int index) const;
 
 
@@ -132,16 +136,16 @@ private:
      */
 
     /* Instance variables */
-    ValueType* elements;        /* A dynamic array of the elements   */
-    int capacity;               /* The allocated size of the array   */
-    int count;                  /* The number of elements in use     */
+    ValueType* elements;            /* A dynamic array of the elements   */
+    int capacity;                   /* The allocated size of the array   */
+    int count;                      /* The number of elements in use     */
 
     /* The error message function - if index is out of vector range  */
     void checkIndex(int index, int min, int max) const;
     /* Increases vector capacity  */
     void expandCapacity();
     /* Deep copy function  */
-    void deepCopy(const MyVector& src);  
+    void deepCopy(const MyVector& src);
 };
 
 
@@ -169,7 +173,6 @@ MyVector<ValueType>::MyVector() {
 template <typename ValueType>
 MyVector<ValueType>::~MyVector() {
     if (elements != NULL) {
-        //std::cout << "Bye-bye vec!" << std::endl;
         delete[] elements;
     }
 }
@@ -182,7 +185,7 @@ MyVector<ValueType>::~MyVector() {
  */
 template <typename ValueType>
 void MyVector<ValueType>::add(const ValueType& value) {
-    if(count == capacity)expandCapacity();
+    if (count == capacity) expandCapacity();
     elements[count] = value;
     count++;
 }
@@ -205,7 +208,7 @@ bool MyVector<ValueType>::isEmpty() const {
  */
 template <typename ValueType>
 const ValueType &MyVector<ValueType>::get(int index) const {
-    checkIndex(index, 0, count);
+    checkIndex(index, 0, (count - 1));
     return elements[index];
 }
 
@@ -218,8 +221,8 @@ const ValueType &MyVector<ValueType>::get(int index) const {
  */
 template <typename ValueType>
 void MyVector<ValueType>::remove(int index) {
-    checkIndex(index, 0, count);
-    for (int i = index; i < count - 1; i++) {
+    checkIndex(index, 0, (count - 1));
+    for (int i = index; i < (count - 1); i++) {
         elements[i] = elements[i + 1];//Shift elemetns in one position left
     }
     count--;
@@ -234,10 +237,11 @@ void MyVector<ValueType>::remove(int index) {
  */
 template <typename ValueType>
 void MyVector<ValueType>::removeValue(ValueType& value) {
-    if(!isContains(value)){error("remove: Attempting to remove not existing element");
-    }else{
+    if (!contains(value)) {
+        error("remove: Attempting to remove not existing element");
+    } else {
         for (int i = 0; i < count; i++) {
-            if(elements[i] == value){
+            if (elements[i] == value) {
                 remove(i);
             }
         }
@@ -260,10 +264,10 @@ int MyVector<ValueType>::size() const {
  * Returns true if this vector contains at least single such value.
  */
 template <typename ValueType>
-bool MyVector<ValueType>::isContains(const ValueType& value)const{
+bool MyVector<ValueType>::contains(const ValueType& value) const {
     bool contains = false;
-    for(int i = 0; i < count; i++){
-        if(elements[i] == value){
+    for (int i = 0; i < count; i++) {
+        if (elements[i] == value) {
             contains = true;
             break;
         }
@@ -308,7 +312,7 @@ MyVector<ValueType> & MyVector<ValueType>::operator =(const MyVector& src) {
  */
 template <typename ValueType>
 ValueType& MyVector<ValueType>::operator [](int index) {
-    checkIndex(index, 0, count-1);
+    checkIndex(index, 0, count - 1);
     return elements[index];
 }
 
@@ -316,7 +320,7 @@ ValueType& MyVector<ValueType>::operator [](int index) {
  * vector without modification.  */
 template <typename ValueType>
 const ValueType& MyVector<ValueType>::operator [](int index) const {
-    checkIndex(index, 0, count-1);
+    checkIndex(index, 0, count - 1);
     return elements[index];
 }
 
@@ -327,7 +331,9 @@ const ValueType& MyVector<ValueType>::operator [](int index) const {
  */
 template <typename ValueType>
 void MyVector<ValueType>::checkIndex(int index, int min, int max) const {
-    if (index < min || index > max) {error("MyVector:: index is outside of valid range");  }
+    if (index < min || index > max) {
+        error("MyVector:: index is outside of valid range");
+    }
 }
 
 /*
@@ -341,7 +347,7 @@ void MyVector<ValueType>::expandCapacity() {
     ValueType *oldArray = elements;
     capacity = 2 * capacity;
     elements = new ValueType[capacity];
-    for(int i = 0; i < count; i++){
+    for (int i = 0; i < count; i++) {
         elements[i] = oldArray[i];
     }
     delete []oldArray;
@@ -362,6 +368,5 @@ void MyVector<ValueType>::deepCopy(const MyVector& src) {
         elements[i] = src.elements[i];//Coping process
     }
 }
-
 
 #endif
