@@ -1,9 +1,15 @@
 /*******************************************************
- * File: HuffmanEncoding.h
- *
- * Definitions for the functions necessary to build a
- * Huffman encoding system.
- *******************************************************/
+* File: HuffmanDecoding.h
+* --------------------------
+* v.2 2015/12/23
+* - decompress() is changed
+* - code formatted
+* - code fields renamed
+*
+* Definitions for the functions necessary to build a
+* Huffman encoding system.
+*
+*******************************************************/
 
 #ifndef HuffmanDecoding_Included
 #define HuffmanDecoding_Included
@@ -23,25 +29,23 @@
 
 
 /* Function: readFileHeader
- * -------------------------
+ * --------------------------------------------------------
  * Reads header of cyphered file and reconstructs huffman tree
  * for this cypher file
  */
-void readFileHeader(ibstream& infile, Node* root);
+void readFileHeader(ibstream& infileStream, Node* root);
 
 /* Function: decodeFileToFile
- * -------------------------
- * Main cypher text decoding process */
-void decodeFileToFile(ibstream &infile, Node* root, obstream &outfile);
+ * --------------------------
+ * Main cyphered text decoding process.
+ */
+void decodeFileToFile(ibstream &infileStream, Node* root, obstream &outfileStream);
 
 /* Function: decompress
- * Usage: decompress(infile, outfile);
+ * Usage: decompress(cypherFile, outFile);
  * --------------------------------------------------------
- * Main Huffman decompressor.
- * Decompresses the file whose contents are specified by the
- * input ibstream, then writes the decompressed version of
- * the file to the stream specified by outfile.
+ * Decompresses cypherFile into outfile.
  */
-void decompress(ibstream& infile, obstream &outfile);
+void decompress(string cypherFile, string outFile);
 
 #endif

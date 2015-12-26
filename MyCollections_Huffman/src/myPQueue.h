@@ -334,7 +334,7 @@ void MyPQueue<ValueType>::deepCopy(const MyPQueue<ValueType>& src) {
     headPointer = NULL;
     count = 0;
 
-    for ((Cell *currentCell = src.headPointer); (currentCell != NULL); (currentCell = currentCell->link)) {
+    for (Cell* currentCell = src.headPointer; currentCell != NULL; currentCell = currentCell->link) {
         enqueue(currentCell->data, currentCell->priority);
     }
 }

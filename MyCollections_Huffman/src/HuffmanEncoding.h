@@ -1,9 +1,14 @@
 /*******************************************************
- * File: HuffmanEncoding.h
- *
- * Definitions for the functions necessary to build a
- * Huffman encoding system.
- *******************************************************/
+* File: HuffmanEncoding.h
+* --------------------------
+* v.2 2015/12/26
+* - compress() is changed
+* - code formatted
+* - code fields renamed
+*
+* Definitions for the functions necessary to build a
+* Huffman encoding system.
+*******************************************************/
 
 #ifndef HuffmanEncoding_Included
 #define HuffmanEncoding_Included
@@ -23,76 +28,70 @@
 #include "myPQueue.h"
 #include "myMap.h"
 
-/* User input:
- * Defines if this file exist in project directory */
+
+/* Function: fileInput
+ * -------------------
+ * Defines if this file exist in project directory
+ */
 string fileInput(string promptText);
 
 /* Function: getFrequencyTable
- * Usage: Map<ext_char, int> freq = getFrequencyTable(file);
+ * Usage: MyMap<ext_char, int> freq = getFrequencyTable(file);
  * --------------------------------------------------------
- * Given an input stream containing text, calculates the
- * frequencies of each character within that text and stores
- * the result as a Map from ext_chars to the number of times
+ * Calculates the frequencies of each character within
+ * infileStream text and stores
+ * the result as a MyMap from ext_chars to the number of times
  * that the character appears.
  */
-MyMap<ext_char, int> getFrequencyTable(ibstream &infile);
+MyMap<ext_char, int> getFrequencyTable(ibstream &infileStream);
 
-/* Function: buildNodesVector
- * Usage: buildNodesVector(vector, frequencyTable);
+/* Function: loadQueueBySymbolsNodes
  * --------------------------------------------------------
- * Creates symbols Nodes from table and adds them to Nodes* vector */
-void loadQueue(MyPQueue<Node*>& mpq, MyMap<ext_char, int> &fileMap);
+ * Creates symbols Nodes from frequency table and adds them
+ * to Nodes* queue
+ */
+void loadQueueBySymbolsNodes(MyPQueue<Node*>& mpq, MyMap<ext_char, int> &frequenciesMap);
 
 /* Function: buildEncodingTree
- * Usage: Node* tree = buildEncodingTree(frequency);
+ * Usage: Node* tree = buildEncodingTree(nodesQueue);
  * --------------------------------------------------------
- * Given a map from extended characters to frequencies,
- * constructs a Huffman encoding tree from those frequencies
+ * Constructs a Huffman encoding tree from frequencies Nodes
  * and returns a pointer to the root.
- *
- * This function can assume that there is always at least one
- * entry in the map, since the EOF character will always
- * be present */
-Node* buildEncodingTree(MyPQueue<Node *> &mpq);
+ */
+Node* buildEncodingTree(MyPQueue<Node *> &nodesQueue);
 
-/* Function: freeTree
- * Usage: freeTree(encodingTree);
- * --------------------------------------------------------
+/* Function: deleteTree
+ * Usage: deleteTree(encodingTree);
+ * --------------------------------
  * Deallocates all memory allocated for a given encoding
- * tree.  */
-void deleteTree(Node* &node);
+ * tree.
+ */
+void deleteTree(Node* &root);
 
-/* Encodes tree shape into cypher
- * Makes depth traversing of coding tree, and writes
- * - 0 - if it's knot at this traverse, without symbols
- * - 1 - if it's leaf at this traverse, without childs. It is followed by char byte code  */
-void encodeTreeToFileHeader(Node* node, obstream &outstr);
+/* Function: encodeTreeToFileHeader
+ * --------------------------------
+ * Encodes tree shape into cypherFile.
+ * Makes depth traversing of coding tree, and writes:
+ */
+void encodeTreeToFileHeader(Node* node, obstream &outfileStream);
 
 /* Function: encodeMainTextToFile
- * Usage: encodeMainTextToFile(sourceFile, encodingTree, cypheredFile);
+ * Usage: encodeMainTextToFile(sourceFileStream,
+ *                             encodingTree,
+ *                             cypheredFileStream);
  * --------------------------------------------------------
- * Encodes the given file using the encoding specified by the
- * given encoding tree, then writes the result one bit at a
- * time to the specified output file.
- *
- * This function can assume the following:
- *
- *   - The encoding tree was constructed from the given file,
- *     so every character appears somewhere in the encoding
- *     tree.
- *
- *   - The output file already has the encoding table written
- *     to it, and the file cursor is at the end of the file.
- *     This means that you should just start writing the bits
- *     without seeking the file anywhere.  */
-void encodeMainTextToFile(ibstream &infile, Node* encodingTree, obstream &outfile);
+ * Encodes chars from  infileStream file text to outfileStream
+ * file.
+ */
+void encodeMainTextToFile(ibstream &infileStream, Node* encodingTree, obstream &outfileStream);
 
 /* Function: compress
- * Usage: compress(infile, outfile);
+ * Usage: compress(inputFile, cypherFile);
  * --------------------------------------------------------
  * Main entry point for the Huffman compressor.  Compresses
- * the file whose contents are specified by the input
- * ibstream, then writes the result to outfile. */
-void compress(ibstream& infile, obstream& outfile);
+ * the inputFile, then writes the result to cypherFile.
+ */
+void compress(string inputFile, string cypherFile);
+
 
 #endif
