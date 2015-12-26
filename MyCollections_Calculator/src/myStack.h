@@ -1,9 +1,11 @@
 /********************************************************************************************
- * File: myStack.h
- * ----------------------
- * v.1 2015/11/27
- * This file implements simple stack structure.
- ********************************************************************************************/
+* File: myStack.h
+* ----------------------
+* v.2 2015/12/26 - Modified
+* - code reformatted
+*
+* This file implements simple stack structure.
+********************************************************************************************/
 
 #ifndef _myStack_h
 #define _myStack_h
@@ -19,7 +21,6 @@
  */
 template <typename ValueType>
 class MyStack {
-
 /* -----------------------------------------------------------------------------------------//
  * Interface section
  * -----------------------------------------------------------------------------------------*/
@@ -40,7 +41,7 @@ public:
      * Frees any heap storage associated with this stack.
      */
     virtual ~MyStack();
-    
+
     /*
      * Method: push
      * Usage: stack.push(value);
@@ -48,7 +49,7 @@ public:
      * Pushes the specified value onto the top of this stack.
      */
     void push(const ValueType& value);
-    
+
     /*
      * Method: isEmpty
      * Usage: if (stack.isEmpty()) ...
@@ -56,7 +57,7 @@ public:
      * Returns true if this stack contains no elements.
      */
     bool isEmpty() const;
-    
+
     /*
      * Method: pop
      * Usage: ValueType top = stack.pop();
@@ -98,7 +99,7 @@ private:
 
     /* Instance variables */
 
-    Vector<ValueType> elements; /* Main internal storage structure */
+    Vector<ValueType> elements;     /* Main internal storage structure */
 };
 
 /* -----------------------------------------------------------------------------------------//
@@ -116,7 +117,6 @@ private:
  */
 template <typename ValueType>
 MyStack<ValueType>::MyStack() {
-
 }
 
 /*
@@ -127,7 +127,6 @@ MyStack<ValueType>::MyStack() {
  */
 template <typename ValueType>
 MyStack<ValueType>::~MyStack() {
-
 }
 
 template <typename ValueType>
@@ -168,6 +167,4 @@ template <typename ValueType>
 int MyStack<ValueType>::size() const {
     return elements.size();
 }
-
-
 #endif

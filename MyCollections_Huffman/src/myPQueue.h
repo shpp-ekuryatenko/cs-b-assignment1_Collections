@@ -1,7 +1,11 @@
 ﻿/********************************************************************************************
  * File: myPQueue.h
  * ----------------------
- * v.1 2015/11/29
+ * v.2 2015/12/25 - Modified
+ * - code reformatted
+ * - some code fields are renamed
+ * - redundant std::cout is removed
+ *
  * This file exports the template class, which maintains
  * structure for priority queue creation.
  ********************************************************************************************/
@@ -41,7 +45,7 @@ public:
      * Frees any heap storage associated with this queue.
      */
     virtual ~MyPQueue();
-    
+
     /*
      * Method: size
      * Usage: int nElems = myPQueue.size();
@@ -128,19 +132,19 @@ private:
      * Main storage object for user values. The chain of
      * cells, combined in linked list, create main queue
      * storage structure - linked list. */
-    struct Cell{
+    struct Cell {
         /* Instance fields */
         int priority;       /* User priority for this data value  */
         ValueType data;     /* User data value  */
         Cell * link;        /* Link to the next cell in the queue list  */
 
         bool operator==(const Cell & n1){
-                 return (priority == n1.priority) && (data == n1.data) && (link == n1.link);
+            return (priority == n1.priority) && (data == n1.data) && (link == n1.link);
         }
     };
 
-    Cell * head;            /* Pointer to the first element to dequeue from queue.  */
-    int count;              /* Enqueued elements counter.  */
+    Cell * headPointer;         /* Pointer to the first element to dequeue from queue.  */
+    int count;                  /* Enqueued elements counter.  */
 
     /* Private methods    */
 
@@ -177,7 +181,7 @@ private:
  */
 template <typename ValueType>
 MyPQueue<ValueType>::MyPQueue() {
-    head = NULL;
+    headPointer = NULL;
     count = 0;
 }
 
@@ -203,7 +207,7 @@ int MyPQueue<ValueType>::size() const {
  */
 template <typename ValueType>
 bool MyPQueue<ValueType>::isEmpty() const {
-    return count == 0;
+    return (count == 0);
 }
 
 /*
@@ -218,29 +222,36 @@ bool MyPQueue<ValueType>::isEmpty() const {
  * as a link to previous cell - which priority isn't bigger.
  */
 template <typename ValueType>
-void MyPQueue<ValueType>::enqueue(const ValueType& value, const int priority) {
-    if(priority < 0)error("enqueue: Attempting to enqueue negative priority");
+void MyPQueue<ValueType>::enqueue(const ValueType& inputValue, const int inputPriority) {
+    if (inputPriority < 0) {
+        error("enqueue: Attempting to enqueue negative priority");
+    }
+
     Cell * inputCell = new Cell;
-    inputCell->data = value;
-    inputCell->priority = priority;
+    inputCell->data = inputValue;
+    inputCell->priority = inputPriority;
     inputCell->link = NULL;
-    if(head == NULL){
-        head = inputCell;//It is first input into the queue.
-    }else if(priority < head->priority){
-        inputCell->link = head;//Move old head cell inside queue.
-        head = inputCell;      //Put this input cell as a head.
-    }else{
-        Cell * cp = head;//Marker, which priority will be bigger then input cell priority.
-        Cell * previousCell = head;//Marker, which priority will be even or less then input priority.
-        while(priority >= cp->priority){//The oldest values are passed - so FIFO rule is work.
-            previousCell = cp;//Move deeper into queue to find suitable place
-            cp = cp->link;
-            if(cp == NULL)break;//At this condition inputCell will be end of list
+
+    if (headPointer == NULL) {
+        headPointer = inputCell; //It is first input into the queue.
+    } else if (inputPriority < headPointer->priority) {
+        inputCell->link = headPointer;//Move old head cell inside queue.
+        headPointer = inputCell; //Put this input cell as a head.
+    } else {
+        Cell * currentCell = headPointer; //Marker, which priority will be bigger then input cell priority.
+        Cell * previousCell = headPointer; //Marker, which priority will be even or less then input priority.
+
+        while (inputPriority >= (currentCell->priority)) {//The oldest values are passed - so FIFO rule is work.
+            previousCell = currentCell; //Move deeper into queue to find suitable place
+            currentCell = currentCell->link;
+            if (currentCell == NULL) break; //At this condition inputCell will be end of list
         }
+
         /* Main insertion process */
         previousCell->link = inputCell;
-        inputCell->link = cp;
+        inputCell->link = currentCell;
     }
+
     count++;
 }
 
@@ -250,9 +261,12 @@ void MyPQueue<ValueType>::enqueue(const ValueType& value, const int priority) {
  * Return the head cell data.
  */
 template <typename ValueType>
-ValueType MyPQueue<ValueType>::peek() const{
-    if(isEmpty())error("peek: Attempting to peek empty queue");
-    return head->data;
+ValueType MyPQueue<ValueType>::peek() const {
+    if (isEmpty()) {
+        error("peek: Attempting to peek empty queue");
+    }
+
+    return headPointer->data;
 }
 
 /*
@@ -262,12 +276,17 @@ ValueType MyPQueue<ValueType>::peek() const{
  */
 template <typename ValueType>
 ValueType MyPQueue<ValueType>::dequeueMin(){
-    if(isEmpty())error("dequeueMin: Attempting to dequeue from empty queue");
-    Cell *cp = head;
-    ValueType result = cp->data;
-    head = cp->link;
-    delete cp;
+    if (isEmpty()) {
+        error("dequeueMin: Attempting to dequeue from empty queue");
+    }
+
+    Cell *currentCell = headPointer;
+    ValueType result = currentCell->data;
+    headPointer = currentCell->link;
+
+    delete currentCell;
     count--;
+
     return result;
 }
 
@@ -284,7 +303,6 @@ MyPQueue<ValueType>::MyPQueue(const MyPQueue<ValueType>& src) {
 
 template <typename ValueType>
 MyPQueue<ValueType> & MyPQueue<ValueType>::operator =(const MyPQueue& src) {
-    std::cout << "Hey! Assign!" << std::endl;
     if (this != &src) {
         clear();
         deepCopy(src);
@@ -299,7 +317,7 @@ MyPQueue<ValueType> & MyPQueue<ValueType>::operator =(const MyPQueue& src) {
  */
 template <typename ValueType>
 void MyPQueue<ValueType>::clear(){
-    while(count > 0){
+    while (count > 0) {
         dequeueMin();
     }
 }
@@ -313,13 +331,12 @@ void MyPQueue<ValueType>::clear(){
  */
 template <typename ValueType>
 void MyPQueue<ValueType>::deepCopy(const MyPQueue<ValueType>& src) {
-    head = NULL;
+    headPointer = NULL;
     count = 0;
-    for (Cell *cp = src.head; cp != NULL; cp = cp->link) {
-        enqueue(cp->data, cp->priority);
-    }
-    //std::cout << "DeepCopied!" << std::endl;
-}
 
+    for ((Cell *currentCell = src.headPointer); (currentCell != NULL); (currentCell = currentCell->link)) {
+        enqueue(currentCell->data, currentCell->priority);
+    }
+}
 
 #endif
